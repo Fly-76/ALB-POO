@@ -9,10 +9,11 @@ $userId = $_SESSION['logged'];
 if(isset($_GET['account']) && !empty($_GET['account'])) {
   $accountId = htmlspecialchars($_GET['account']);
 
-  require "model/accountModel.php";
-  $db = dbConnect();
-  if (userVerif($db, $accountId, $userId)) {
-    deleteAccount($db, $accountId);
+  require_once "model/accountModel.php";
+  $accountModel = new AccountModel();
+  
+  if ($accountModel->userVerif($accountId, $userId)) {
+    $accountModel->deleteAccount($accountId);
   } else header('Location: login.php');
 }
 

@@ -18,10 +18,10 @@ if(isset($_POST['accountCredit']) && !empty($_POST['accountCredit']))
 if(isset($_POST['amount']) && !empty($_POST['amount'])) 
   $amount = htmlspecialchars($_POST['amount']);
 
-require "model/accountModel.php";
-$db = dbConnect();
-$accounts = getAccounts($db, $userId);
-$Transfer = execTransfer($db, $accountDebit, $accountCredit, $amount);
+require_once "model/accountModel.php";
+$accountModel = new AccountModel();
+$accounts = $accountModel->getAccounts($userId);
+$Transfer = $accountModel->execTransfer($accountDebit, $accountCredit, $amount);
 
 $uName =($_SESSION['uName']);
 $cnxState = 'Deconnexion';

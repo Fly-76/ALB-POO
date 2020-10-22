@@ -9,13 +9,16 @@ $userId = $_SESSION['logged'];
 if(isset($_GET['account']) && !empty($_GET['account'])) {
   $accountId = htmlspecialchars($_GET['account']);
 
-  require "model/accountModel.php";
-  require "model/transactionModel.php";
-  $db = dbConnect();
-  if (!userVerif($db, $accountId, $userId)) header('Location: login.php');
+  require_once "model/accountModel.php";
+  $accountModel = new AccountModel();
 
-  $account = getAccount($db, $accountId);
-  $transact = getTransact($db, $accountId);
+  require_once "model/transactionModel.php";
+  $transactionModel = new TransactionModel();
+
+  if (!$accountModel->userVerif($accountId, $userId)) header('Location: login.php');
+
+  $account = $accountModel->getAccount($accountId);
+  $transact = $transactionModel->getTransactions($accountId);
 }
 
 $uName =($_SESSION['uName']);

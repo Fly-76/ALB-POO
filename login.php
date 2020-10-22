@@ -8,9 +8,10 @@ if(isset($_POST['pwd']) && !empty($_POST['pwd']))
 
 // Verify user Id and Password, then set logged=TRUE
 if (isset($id) && isset($pwd)) {
-  require "model/userModel.php";
-  $db = dbConnect();
-  $user = getUser($db, $id);
+
+  require_once "model/userModel.php";
+  $userModel = new UserModel();
+  $user = $userModel->getUser($id);
 
   if ($user) {
       if ( password_verify($pwd, $user["u_password"])) {

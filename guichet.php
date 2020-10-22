@@ -20,12 +20,13 @@ if(isset($_POST['amount']) && !empty($_POST['amount']))
 if(isset($_POST['type']) && !empty($_POST['type'])) 
   $type = htmlspecialchars($_POST['type']);
 
-require "model/accountModel.php";
-$db = dbConnect();
-if (userVerif($db, $accountId, $userId)) {
-  $account = getAccount($db, $accountId);
-  $Transfer = execCounterTransfer($db, $accountId, $type, $amount);
-  $account = getAccount($db, $accountId);
+require_once "model/accountModel.php";
+$accountModel = new AccountModel();
+
+if ($accountModel->userVerif($accountId, $userId)) {
+  $account = $accountModel->getAccount($accountId);
+  $Transfer = $accountModel->execCounterTransfer($accountId, $type, $amount);
+  $account = $accountModel->getAccount($accountId);
 
 } else header('Location: login.php');
 

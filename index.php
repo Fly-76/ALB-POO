@@ -7,8 +7,8 @@ if (!isset($_SESSION['logged']))
 $userId = $_SESSION['logged'];
 
 require "model/accountModel.php";
-$db = dbConnect();
-$accounts = getAccounts($db, $userId);
+$accountModel = new AccountModel();
+$accounts = $accountModel->getAccounts($userId);
 
 $uName =($_SESSION['uName']);
 $cnxState = 'Deconnexion';
