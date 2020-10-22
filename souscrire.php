@@ -15,10 +15,9 @@ if(isset($_POST['type']) && !empty($_POST['type']))
 if(isset($_POST['amount']) && !empty($_POST['amount'])) 
   $amount = htmlspecialchars($_POST['amount']);
 
-
-require "model/accountModel.php";
-$db = dbConnect();
-$newAccount = newAccount($db, $userId, $type, $amount);
+require_once "model/accountModel.php";
+$accountModel = new AccountModel();
+$newAccount = $accountModel->newAccount($userId, $type, $amount);
 
 $uName =($_SESSION['uName']);
 $cnxState = 'Deconnexion';

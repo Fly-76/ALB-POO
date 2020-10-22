@@ -6,8 +6,9 @@ if (!isset($_SESSION['logged']))
 
 $userId = $_SESSION['logged'];
 
-require "model/userModel.php";
-$db = dbConnect();
+require_once "model/userModel.php";
+$userModel = new UserModel();
+$user = $userModel->getUser($id);
 
 $uName =($_SESSION['uName']);
 $cnxState = 'Deconnexion';
