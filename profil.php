@@ -1,5 +1,4 @@
 <?php
-// If user's not logged then go to login page
 session_start();
 if (!isset($_SESSION['logged']))
   header('Location: login.php');
@@ -8,7 +7,7 @@ $userId = $_SESSION['logged'];
 
 require_once "model/userModel.php";
 $userModel = new UserModel();
-$user = $userModel->getUser($id);
+$user = $userModel->getUser($userId);
 
 $uName =($_SESSION['uName']);
 $cnxState = 'Deconnexion';
