@@ -15,7 +15,7 @@
 
 // *** Check userModel
     echo "<br>";
-    $user = $userModel->getUser('root@gmail.com');
+    $user = $userModel->getUserByEmail('root@gmail.com');
     var_dump($user);
     echo "<br>";
 

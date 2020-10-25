@@ -11,7 +11,7 @@ if (isset($id) && isset($pwd)) {
 
   require_once "model/userModel.php";
   $userModel = new UserModel();
-  $user = $userModel->getUser($id);
+  $user = $userModel->getUserByEmail($id);
 
   if ($user) {
       if ( password_verify($pwd, $user["u_password"])) {
