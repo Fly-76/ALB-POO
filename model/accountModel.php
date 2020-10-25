@@ -44,47 +44,60 @@ class AccountModel extends Database {
         $db = parent::getDB();
         if ($type!='' && $amount!='') {
     
-            $query = $db->query("SELECT CONCAT( 'FR 000' ,RIGHT(MAX(a_number),11) + FLOOR(RAND()*1000)) AS accountNb FROM alb_accounts");
-            $account = $query->fetch(PDO::FETCH_ASSOC);
-    
-            $accountNb = $account['accountNb'];
-    
-            $query = $db->prepare("
-                INSERT INTO alb_accounts
-                VALUE (
-                    null,
-                    :userId,
-                    :accountNb,
-                    :type,
-                    :amount,
-                    NOW(),
-                    null
-                )
-            ");
-            $query->execute([
-                "accountNb" => $accountNb,
-                "amount" => $amount,
-                "userId" => $userId,
-                "type" => $type
-            ]);
-    
-            // Log first transaction
-            $query = $db->prepare("
-                INSERT INTO alb_transactions 
-                VALUES (
-                    null,
-                    (SELECT a_id FROM alb_accounts WHERE a_number = :accountNb),
-                    'Ouverture de compte',
-                    'Credit',
-                    :amount,
-                    NOW()
-                )
-            ");
-    
-            $query->execute([
-                "amount" => $amount,
-                "accountNb" => $accountNb
-            ]);
+            try
+            {
+                $db->beginTransaction();
+            
+                $query = $db->query("SELECT CONCAT( 'FR 000' ,RIGHT(MAX(a_number),11) + FLOOR(RAND()*1000)) AS accountNb FROM alb_accounts");
+                $account = $query->fetch(PDO::FETCH_ASSOC);
+        
+                $accountNb = $account['accountNb'];
+        
+                $query = $db->prepare("
+                    INSERT INTO alb_accounts
+                    VALUE (
+                        null,
+                        :userId,
+                        :accountNb,
+                        :type,
+                        :amount,
+                        NOW(),
+                        null
+                    )
+                ");
+                $query->execute([
+                    "accountNb" => $accountNb,
+                    "amount" => $amount,
+                    "userId" => $userId,
+                    "type" => $type
+                ]);
+        
+                // Log first transaction
+                $query = $db->prepare("
+                    INSERT INTO alb_transactions 
+                    VALUES (
+                        null,
+                        (SELECT a_id FROM alb_accounts WHERE a_number = :accountNb),
+                        'Ouverture de compte',
+                        'Credit',
+                        :amount,
+                        NOW()
+                    )
+                ");
+        
+                $query->execute([
+                    "amount" => $amount,
+                    "accountNb" => $accountNb
+                ]);
+                
+                $db->commit();            
+            }
+            catch(Exception $e)
+            {
+                $db->rollBack();
+                die('Erreur : '.$e->getMessage());
+            }    
+
         }
     }
     
@@ -95,21 +108,33 @@ class AccountModel extends Database {
 
         if ($accountId!='') {
 
-            $query = $db->prepare("
-                DELETE FROM `alb_transactions`
-                WHERE t_account_id = :accountId            
-            ");
-            $query->execute([
-                "accountId" => $accountId
-            ]);
+            try {
+                $db->beginTransaction();
+            
+                $query = $db->prepare("
+                    DELETE FROM `alb_transactions`
+                    WHERE t_account_id = :accountId            
+                ");
+                $query->execute([
+                    "accountId" => $accountId
+                ]);
 
-            $query = $db->prepare("
-                DELETE FROM `alb_accounts`
-                WHERE a_id = :accountId            
-            ");
-            $query->execute([
-                "accountId" => $accountId
-            ]);
+                $query = $db->prepare("
+                    DELETE FROM `alb_accounts`
+                    WHERE a_id = :accountId            
+                ");
+                $query->execute([
+                    "accountId" => $accountId
+                ]);
+                
+                $db->commit();            
+            }
+            catch(Exception $e)
+            {
+                $db->rollBack();
+                die('Erreur : '.$e->getMessage());
+            }    
+            
         }
     }
 
@@ -123,61 +148,68 @@ class AccountModel extends Database {
 
         $db = parent::getDB();
         if ($accountDebit!='' && $accountCredit!='' && $amount!='') {
-            $db->beginTransaction();
+            try {
 
-            $query = $db->prepare("
-                INSERT INTO alb_transactions 
-                VALUES (
-                    null,
-                    (SELECT a_id FROM alb_accounts WHERE a_number = :accountDebit),
-                    CONCAT(:opDescription, :accountCredit),
-                    :opName,
-                    :amount,
-                    NOW()
-                )
-            ");
+                $db->beginTransaction();
 
-            // Log debit transaction
-            $query->execute([
-                "amount" => $amount,
-                "opName" => 'Debit',
-                "opDescription" => 'Transfert vers ',
-                "accountDebit" => $this->accountNb($accountDebit),
-                "accountCredit" => $accountCredit
-            ]);
+                $query = $db->prepare("
+                    INSERT INTO alb_transactions 
+                    VALUES (
+                        null,
+                        (SELECT a_id FROM alb_accounts WHERE a_number = :accountDebit),
+                        CONCAT(:opDescription, :accountCredit),
+                        :opName,
+                        :amount,
+                        NOW()
+                    )
+                ");
 
-            // Log credit transaction
-            $query->execute([
-                "amount" => $amount,
-                "opName" => 'Credit',
-                "opDescription" => 'Transfert depuis ',
-                "accountDebit" => $this->accountNb($accountCredit),
-                "accountCredit" => $accountDebit
-            ]);
+                // Log debit transaction
+                $query->execute([
+                    "amount" => $amount,
+                    "opName" => 'Debit',
+                    "opDescription" => 'Transfert vers ',
+                    "accountDebit" => $this->accountNb($accountDebit),
+                    "accountCredit" => $accountCredit
+                ]);
 
-            // Update of debited account balance
-            $query = $db->prepare("
-                UPDATE alb_accounts
-                SET a_balance = ((SELECT a_balance FROM alb_accounts WHERE a_number = :account) - :amount)
-                WHERE a_number = :account;
-            ");
-            $query->execute([
-                "amount" => $amount,
-                "account" => $this->accountNb($accountDebit)
-            ]);
+                // Log credit transaction
+                $query->execute([
+                    "amount" => $amount,
+                    "opName" => 'Credit',
+                    "opDescription" => 'Transfert depuis ',
+                    "accountDebit" => $this->accountNb($accountCredit),
+                    "accountCredit" => $accountDebit
+                ]);
 
-            // Update of credited account balance
-            $query = $db->prepare("
-                UPDATE alb_accounts
-                SET a_balance = ((SELECT a_balance FROM alb_accounts WHERE a_number = :account) + :amount)
-                WHERE a_number = :account;
-            ");
-            $query->execute([
-                "amount" => $amount,
-                "account" => $this->accountNb($accountCredit)
-            ]);
+                // Update of debited account balance
+                $query = $db->prepare("
+                    UPDATE alb_accounts
+                    SET a_balance = ((SELECT a_balance FROM alb_accounts WHERE a_number = :account) - :amount)
+                    WHERE a_number = :account;
+                ");
+                $query->execute([
+                    "amount" => $amount,
+                    "account" => $this->accountNb($accountDebit)
+                ]);
 
-            $db->commit();
+                // Update of credited account balance
+                $query = $db->prepare("
+                    UPDATE alb_accounts
+                    SET a_balance = ((SELECT a_balance FROM alb_accounts WHERE a_number = :account) + :amount)
+                    WHERE a_number = :account;
+                ");
+                $query->execute([
+                    "amount" => $amount,
+                    "account" => $this->accountNb($accountCredit)
+                ]);
+                $db->commit();
+            }
+            catch(Exception $e) {
+                $db->rollBack();
+                die('Erreur : '.$e->getMessage());
+            }    
+
         }
     }
 
@@ -186,39 +218,47 @@ class AccountModel extends Database {
 
         $db = parent::getDB();
         if ($account!='' && $type!='' && $amount!='') {
-            $db->beginTransaction();
 
-            // Log credit/debit transaction
-            $query = $db->prepare("
-                INSERT INTO alb_transactions 
-                VALUES (
-                    null,
-                    :account,
-                    :opDescription,
-                    :opName,
-                    :amount,
-                    NOW()
-                )
-            ");
+            try {
+                $db->beginTransaction();
 
-            $query->execute([
-                "amount" => $amount,
-                "opName" => ucfirst($type),
-                "opDescription" => ucfirst($type) . ' guichet',
-                "account" => $account
-            ]);
-            
-            $query = $db->prepare("
-                UPDATE alb_accounts
-                SET a_balance = ((SELECT a_balance FROM alb_accounts WHERE a_id = :account) + :amount)
-                WHERE a_id = :account;
-            ");
-            $query->execute([
-                "amount" => $type=="depot"?$amount:(-1)*$amount,
-                "account" => $account
-            ]);
-
-            $db->commit();
+                // Log credit/debit transaction
+                $query = $db->prepare("
+                    INSERT INTO alb_transactions 
+                    VALUES (
+                        null,
+                        :account,
+                        :opDescription,
+                        :opName,
+                        :amount,
+                        NOW()
+                    )
+                ");
+    
+                $query->execute([
+                    "amount" => $amount,
+                    "opName" => ucfirst($type),
+                    "opDescription" => ucfirst($type) . ' guichet',
+                    "account" => $account
+                ]);
+                
+                $query = $db->prepare("
+                    UPDATE alb_accounts
+                    SET a_balance = ((SELECT a_balance FROM alb_accounts WHERE a_id = :account) + :amount)
+                    WHERE a_id = :account;
+                ");
+                $query->execute([
+                    "amount" => $type=="depot"?$amount:(-1)*$amount,
+                    "account" => $account
+                ]);
+    
+                $db->commit();
+            }
+            catch(Exception $e) {
+                $db->rollBack();
+                die('Erreur : '.$e->getMessage());
+            }    
         }
     }
+
 }
