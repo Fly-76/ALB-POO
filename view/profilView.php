@@ -6,21 +6,24 @@
       <?php
         require_once "view/formView.php";
         $form = new Form("");
-
-        $form->setText('u_id','reserved');
-        $form->setText('u_civility','Civilité');
-        $form->setText('u_firstname','Nom');
-        $form->setText('u_lastname','Prénom');
-        $form->setText('u_birthdate','Date de naissance');
-        $form->setText('u_email','Email');
-        $form->setText('u_password','Mot de passe');
-        $form->setText('u_address_line1','Adresse');
-        $form->setText('u_address_line2','Adresse');
-        $form->setText('u_zipcode','Code Postal');
-        $form->setText('u_city','Ville');
-        $form->setText('u_country','Pays');
-        $form->setText('u_creation_date','reserved');
-        $form->setSubmit('profil','Enregistrer');
+        // // just to test formView
+        //   $form->setRadio('Civilité', ['Mr', 'Mme', 'Mlle']);
+        //   $form->setCheckBox('Valider');
+        // // end test
+        // $form->setText('u_id','reserved');
+        $form->setText('u_civility','Civilité', $user->getU_civility());
+        $form->setText('u_firstname','Nom', $user->getU_firstname());
+        $form->setText('u_lastname','Prénom', $user->getU_lastname());
+        $form->setText('u_birthdate','Date de naissance', $user->getU_birthdate());
+        $form->setText('u_email','Email', $user->getU_email());
+        $form->setText('u_password','Mot de passe', $user->getU_password());
+        $form->setText('u_address_line1','Adresse', $user->getU_address_line1());
+        $form->setText('u_address_line2','Adresse', $user->getU_address_line2());
+        $form->setText('u_zipcode','Code Postal', $user->getU_address_line2());
+        $form->setText('u_city','Ville', $user->getU_city());
+        $form->setText('u_country','Pays', $user->getU_country());
+        $form->setText('u_creation_date','reserved', $user->getU_creation_date());
+        $form->setSubmit('profil','Enregistrer', '');
 
         $form->showForm();
       ?>

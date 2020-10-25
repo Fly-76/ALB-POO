@@ -7,7 +7,14 @@ $userId = $_SESSION['logged'];
 
 require_once "model/userModel.php";
 $userModel = new UserModel();
-$user = $userModel->getUser($userId);
+
+if(isset($_POST["profil"])) {
+  $user = new User($_POST);
+  //echo "<br> POST User->firstname : " . $user->getU_firstname();
+} else {
+  $user = $userModel->getUserById($userId);
+  //echo "<br> POST User->firstname : " . $user->getU_firstname();
+}
 
 $uName =($_SESSION['uName']);
 $cnxState = 'Deconnexion';
